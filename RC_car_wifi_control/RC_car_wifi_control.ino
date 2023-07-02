@@ -80,7 +80,7 @@ void cb_set()
     
     if (strcmp(server.argName(i).c_str(),"p2") == 0)
     {
-      ports[2]=(byte)atoi(server.arg(i).c_str());
+      ports[2]=val;
     }
     
     if (strcmp(server.argName(i).c_str(),"p3") == 0)
