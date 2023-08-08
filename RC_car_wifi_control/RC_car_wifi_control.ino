@@ -23,17 +23,24 @@ Author: fvilmos, https://github.com/fvilmos
 #include <ESP8266WebServer.h>
 #include <ESP8266mDNS.h>
 
-/*constants and variables*/
+/*constants and variables, macros*/
+#define set_bit(bValue,bBit) (bValue = (bValue | (1<<bBit)))
+#define clear_bit(bValue,bBit) (bValue = (bValue & ~(1<<bBit)))
+#define get_bit(bValue,bBit) ((bValue >> bBit) & 1)
 
 /*Wi-Fi SSID*/
-const char * ssid = "SSID"; /* <- update here with SSID */
-const char * password =  "PASSW"; /* <- upate here with password */
+const char * ssid = "<SSID>"; /* <- update here with SSID */
+const char * password =  "<PASSWORF>"; /* <- upate here with password */
+
+/*holds the port state*/
+byte ports=0;
+
 
 /*web server object*/
 ESP8266WebServer server(80);
 MDNSResponder mdns;
 
-/*put ports on the initioal state*/
+/*put ports on the initial state*/
 void reset_gpios()
 {
   /* init the pins*/
@@ -52,43 +59,74 @@ void cb_root()
 
 void cb_set()
 {
-  String message = "Arguments:";
-  byte ports[]={0,0,0,0};
-  int duration=0;
+  String message = "";
   byte val = 0;
-
-  message += server.args();
-  message += "\n";
+  const char* name = "";
+  unsigned int duration = 0;
 
   for (int i = 0; i < server.args(); i++) 
   {
-    message += server.argName(i) + ": ";
-    message += server.arg(i) + "\n";
+    message += server.argName(i) + ":";
+    message += server.arg(i) + ",";
     val = (byte)atoi(server.arg(i).c_str());
-
+    name = server.argName(i).c_str();
 
     /*search for ports*/
-    if (strcmp(server.argName(i).c_str(),"p0") == 0)
+    if (strcmp(name,"p0") == 0)
     {
-      ports[0]=val;
+      /*set port value*/
+      if (val == 1)
+      {
+        set_bit(ports,0);
+      }
+      else
+      {
+        clear_bit(ports,0);
+      }
+      
     }
     
-    if (strcmp(server.argName(i).c_str(),"p1") == 0)
+    if (strcmp(name,"p1") == 0)
     {
-      ports[1]=val;
+      /*set port value*/
+      if (val == 1)
+      {
+        set_bit(ports,1);
+      }
+      else
+      {
+        clear_bit(ports,1);
+      }
     }
     
-    if (strcmp(server.argName(i).c_str(),"p2") == 0)
+    if (strcmp(name,"p2") == 0)
     {
-      ports[2]=val;
+      /*set port value*/
+      if (val == 1)
+      {
+        set_bit(ports,2);
+      }
+      else
+      {
+        clear_bit(ports,2);
+      }
+
     }
     
-    if (strcmp(server.argName(i).c_str(),"p3") == 0)
+    if (strcmp(name,"p3") == 0)
     {
-      ports[3]=val;
+      /*set port value*/
+      if (val == 1)
+      {
+        set_bit(ports,3);
+      }
+      else
+      {
+        clear_bit(ports,3);
+      }
     }
 
-    if (strcmp(server.argName(i).c_str(),"duration") == 0)
+    if (strcmp(name,"duration") == 0)
     {
       duration= atoi(server.arg(i).c_str());
     }
@@ -98,7 +136,7 @@ void cb_set()
   /*write values to the GPIOs, wait, than reset*/
   for (byte i=0; i<4; i++)
   {
-    if (ports[i]==1)
+    if (get_bit(ports,i)==1)
     {
       digitalWrite(i, LOW);
     }
@@ -107,8 +145,13 @@ void cb_set()
       digitalWrite(i, HIGH);
     }
   }
-  delay(duration);
-  reset_gpios();
+
+  if (duration>0)
+  {
+    delay(duration);
+    reset_gpios();
+    
+  }
   
   server.send(200, "text/plain", message); 
 }
@@ -158,5 +201,5 @@ void loop()
 {
   mdns.update();
   server.handleClient();
-}
 
+}
